@@ -14,6 +14,7 @@
 		E444B0FD2C01CC5500AA4653 /* RetroUIGameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E444B0FC2C01CC5500AA4653 /* RetroUIGameTests.swift */; };
 		E444B1072C01CC5500AA4653 /* RetroUIGameUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E444B1062C01CC5500AA4653 /* RetroUIGameUITests.swift */; };
 		E444B1092C01CC5500AA4653 /* RetroUIGameUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E444B1082C01CC5500AA4653 /* RetroUIGameUITestsLaunchTests.swift */; };
+		E444B1162C01CCC700AA4653 /* REAMDE.md in Resources */ = {isa = PBXBuildFile; fileRef = E444B1152C01CCC700AA4653 /* REAMDE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		E444B1022C01CC5500AA4653 /* RetroUIGameUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RetroUIGameUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E444B1062C01CC5500AA4653 /* RetroUIGameUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetroUIGameUITests.swift; sourceTree = "<group>"; };
 		E444B1082C01CC5500AA4653 /* RetroUIGameUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetroUIGameUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		E444B1152C01CCC700AA4653 /* REAMDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = REAMDE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +77,7 @@
 		E444B0DE2C01CC5100AA4653 = {
 			isa = PBXGroup;
 			children = (
+				E444B1152C01CCC700AA4653 /* REAMDE.md */,
 				E444B0E92C01CC5100AA4653 /* RetroUIGame */,
 				E444B0FB2C01CC5500AA4653 /* RetroUIGameTests */,
 				E444B1052C01CC5500AA4653 /* RetroUIGameUITests */,
@@ -233,6 +236,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E444B1162C01CCC700AA4653 /* REAMDE.md in Resources */,
 				E444B0F32C01CC5400AA4653 /* Preview Assets.xcassets in Resources */,
 				E444B0EF2C01CC5400AA4653 /* Assets.xcassets in Resources */,
 			);
