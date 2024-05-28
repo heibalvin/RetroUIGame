@@ -1,0 +1,21 @@
+{
+  "images" : [
+    {
+      "filename" : "best-arcade-games-2-618be5a8aa3d8-120.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
