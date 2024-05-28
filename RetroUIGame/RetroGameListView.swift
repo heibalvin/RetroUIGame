@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 struct RetroGameListView: View {
     @ObservedObject var games: RetroGameList
     
@@ -39,5 +38,5 @@ struct RetroGameListView: View {
 }
 
 #Preview {
-    RetroGameListView(games: RetroGameList.preview)
+    RetroGameListView(games: RetroGameList())
 }

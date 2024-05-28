@@ -6,18 +6,25 @@
 //
 
 import SwiftUI
+import SpriteKit
 
-struct ImageDetailView: View {
-    let imagenamed: String
+struct RetroGameView: View {
+    var id: Int
+    
+    var scene: SKScene {
+        let scene = RetroGameScene(id: id)
+        scene.size = CGSize(width: 320, height: 224)
+        scene.scaleMode = .aspectFit
+        scene.anchorPoint = .zero
+        return scene
+    }
         
     var body: some View {
-        Image(imagenamed)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 120, height: 192)
+        SpriteView(scene: scene)
+            .ignoresSafeArea()
     }
 }
 
 #Preview {
-    ImageDetailView(imagenamed: "best-arcade-games-1-618be09a69c16_120")
+    RetroGameView(id: 9)
 }

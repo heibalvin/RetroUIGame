@@ -1,42 +1,42 @@
 [
     {
         "id" : 1,
-        "hex": "",
+        "hex": "618be09a69c16",
         "imagename" : "best-arcade-games-1-618be09a69c16-120",
         "isCompleted" : false,
         "name" : "Donkey Kong"
     },
     {
         "id" : 2,
-        "hex": "",
+        "hex": "618be5a8aa3d8",
         "imagename" : "best-arcade-games-2-618be5a8aa3d8-120",
-        "isCompleted" : false,
+        "isCompleted" : true,
         "name" : "Galaga"
     },
     {
         "id" : 3,
-        "hex": "",
+        "hex": "618be755780fc",
         "imagename" : "best-arcade-games-3-618be755780fc-120",
         "isCompleted" : false,
         "name" : "Pacman"
     },
     {
         "id" : 4,
-        "hex": "",
+        "hex": "618ccb2422b80",
         "imagename" : "best-arcade-games-4-618ccb2422b80-120",
         "isCompleted" : false,
         "name" : "Space Invaders"
     },
     {
         "id" : 5,
-        "hex": "",
+        "hex": "618ccb2a50d05",
         "imagename" : "best-arcade-games-5-618ccb2a50d05-120",
         "isCompleted" : false,
         "name" : "Ms. Pac Man"
     },
     {
         "id" : 6,
-        "hex": "",
+        "hex": "618ccc50ca288",
         "imagename" : "best-arcade-games-6-618ccc50ca288-120",
         "isCompleted" : false,
         "name" : "Gauntlet"
@@ -50,21 +50,21 @@
     },
     {
         "id" : 8,
-        "hex": "",
+        "hex": "618ccfab7ef3b",
         "imagename" : "best-arcade-games-8-618ccfab7ef3b-120",
         "isCompleted" : false,
         "name" : "Street Fighter 2"
     },
     {
         "id" : 9,
-        "hex": "",
+        "hex": "618cd068cd286",
         "imagename" : "best-arcade-games-9-618cd068cd286-120",
         "isCompleted" : true,
         "name" : "Frogger"
     },
     {
         "id" : 10,
-        "hex": "",
+        "hex": "618cd1b6a83ee",
         "imagename" : "best-arcade-games-10-618cd1b6a83ee-120",
         "isCompleted" : false,
         "name" : "1942"

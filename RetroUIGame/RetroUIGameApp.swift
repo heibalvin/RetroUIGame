@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct RetroUIGameApp: App {
+    @StateObject var games = RetroGameList(true)
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RetroGameListView(games: games)
         }
     }
 }
