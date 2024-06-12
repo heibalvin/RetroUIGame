@@ -1,60 +1,11 @@
 //
-//  TiledGameEngine.swift
+//  AHGameEngine.swift
 //  RetroUIGame
 //
 //  Created by Alvin Heib on 27/05/2024.
 //
 
 import SpriteKit
-
-struct TiledMap: Codable {
-    var type: String
-    var version: String
-    var tiledversion: String
-    var renderorder: String
-    var orientation: String
-    
-    var width: Int
-    var height: Int
-    var tilewidth: Int
-    var tileheight: Int
-    
-    var nextlayerid: Int
-    var nextobjectid: Int
-    var layers: [TiledLayer]
-    var tilesets: [TiledSet]
-}
-
-struct TiledLayer: Codable {
-    var id: Int
-    var name: String
-    var type: String
-    
-    var visible: Bool
-    var opacity: Float
-    
-    var width: Int
-    var height: Int
-    var x: Int
-    var y: Int
-    
-    var data: [Int]
-}
-
-struct TiledSet: Codable {
-    var name: String
-    var firstgid: Int
-    
-    var image: String
-    var imagewidth: Int
-    var imageheight: Int
-    
-    var tilewidth: Int
-    var tileheight: Int
-    var tilecount: Int
-    var margin: Int
-    var spacing: Int
-}
 
 class AHTileMap: NSObject {
     var cols: Int = 28
@@ -68,6 +19,7 @@ class AHTileMap: NSObject {
     var tilesets: [AHTileSet] = []
     
     var node = SKNode()
+    var metas: [AHMetaTile] = []
     
     func load(bundle filename: String, ext: String = "json") {
         guard let url = Bundle.main.url(forResource: filename, withExtension: ext) else {
@@ -131,29 +83,51 @@ class AHTileMap: NSObject {
             node.addChild(tilelayer.node)
         }
     }
+    
+    func add(meta col: Int, row: Int, gid: Int, type: AHMetaTileType, tilelayerId: Int) -> Int {
+        let gids: [Int] = tilelayers[tilelayerId].add(col: col, row: row, gid: gid, type: type)
+        let meta = AHMetaTile(col: col, row: row, gid: gid, type: type, gids: gids, tilelayerId: tilelayerId)
+        metas.append(meta)
+        return metas.count - 1
+    }
+    
+    func rem(meta id: Int) {
+        let meta = metas[id]
+        tilelayers[meta.tilelayerId].rem(col: meta.col, row: meta.row, gids: meta.gids, type: meta.type)
+        metas.remove(at: id)
+    }
+    
+    func mov(meta id: Int, dx: Int, dy: Int) {
+        tilelayers[metas[id].tilelayerId].rem(col: metas[id].col, row: metas[id].row, gids: metas[id].gids, type: metas[id].type)
+        metas[id].col += dx
+        metas[id].row += dy
+        metas[id].gids = tilelayers[metas[id].tilelayerId].add(col: metas[id].col, row: metas[id].row, gid: metas[id].gid, type: metas[id].type)
+    }
+    
+    func ani(meta id: Int, gid: Int) {
+        let meta = metas[id]
+        tilelayers[metas[id].tilelayerId].rem(col: metas[id].col, row: metas[id].row, gids: metas[id].gids, type: metas[id].type)
+        metas[id].gid = gid
+        metas[id].gids = tilelayers[metas[id].tilelayerId].add(col: metas[id].col, row: metas[id].row, gid: metas[id].gid, type: metas[id].type)
+    }
 }
 
-enum AHMetaTileLayout: Int {
-    case twoByTwoPretty     = 1
-    case threeByTwoPretty
-    case fourByTwoPretty
-}
-
-struct AHMetaTile {
-    var dx: Int
-    var dy: Int
-    var dg: Int
+enum AHTileLayerAttibute: Int {
+    case none               = 0
+    case horizontalFlip
+    case verticalFlip
+    case bothFlip
 }
 
 class AHTileLayer: NSObject {
     var map: AHTileMap
     var id: Int = 1
     var name: String = "default"
-    
     var cols: Int = 28
     var rows: Int = 32
-    var datas: [Int] = []
-    var tiles: [AHTile?] = []
+    var datas: [[Int]] = []
+    var attributes: [[AHTileLayerAttibute]] = []
+    var nodes: [[AHTileNode?]] = []
     
     var node: SKNode = SKNode()
     
@@ -162,13 +136,25 @@ class AHTileLayer: NSObject {
         super.init()
     }
     
+    func tilesetId(gid: Int) -> Int {
+        var id = 0
+        for tileset in map.tilesets {
+            if (gid >= tileset.firstgid) && (gid <= tileset.firstgid + tileset.tilecount - 1) {
+                return id
+            }
+            id += 1
+        }
+        
+        return map.tilesets.count - 1
+    }
+    
     func coord2pos(col: Int, row: Int) -> CGPoint {
         return CGPoint(x: col * map.tilewidth + map.tilewidth / 2, y: (rows - row - 1) * map.tileheight + map.tileheight / 2)
     }
     
-    func coord2index(col: Int, row: Int) -> Int {
-        return row * cols + col
-    }
+//    func coord2index(col: Int, row: Int) -> Int {
+//        return row * cols + col
+//    }
     
     func toJSON() -> String {
         let encoder = JSONEncoder()
@@ -179,7 +165,23 @@ class AHTileLayer: NSObject {
     }
     
     func toTiled() -> TiledLayer {
-        return TiledLayer(id: id, name: name, type: "tilelayer", visible: !(node.isHidden), opacity: Float(node.alpha), width: cols, height: rows, x: Int(node.position.x), y: Int(node.position.y), data: datas)
+        var gids = Array(repeating: 0x00, count: cols * rows)
+        var id = 0
+        for row in 0...rows-1 {
+            for col in 0...cols-1 {
+                var data = datas[row][col]
+                if attributes[row][col] == .horizontalFlip {
+                    data = data | 0x80000000
+                } else if attributes[row][col] == .verticalFlip {
+                    data = data | 0x40000000
+                } else if attributes[row][col] == .bothFlip {
+                    data = data | 0xC0000000
+                }
+                gids[id] = data
+                id += 1
+            }
+        }
+        return TiledLayer(id: id, name: name, type: "tilelayer", visible: !(node.isHidden), opacity: Float(node.alpha), width: cols, height: rows, x: Int(node.position.x), y: Int(node.position.y), data: gids)
     }
     
     func fromTiled(_ conf: TiledLayer) {
@@ -192,85 +194,131 @@ class AHTileLayer: NSObject {
         node.isHidden = !(conf.visible)
         node.alpha = CGFloat(conf.opacity)
         node.position = CGPoint(x: conf.x, y: conf.y)
-        datas = conf.data
-        tiles = Array(repeating: nil, count: datas.count)
+        datas = Array(repeating: Array(repeating: 0x00, count: cols), count: rows)
+        attributes = Array(repeating: Array(repeating: .none, count: cols), count: rows)
+        nodes = Array(repeating: Array(repeating: nil, count: cols), count: rows)
         
-        updateTiles()
-    }
-    
-    func updateTiles() {
+        var id = 0
         for row in 0...rows-1 {
             for col in 0...cols-1 {
-                let gid = datas[coord2index(col: col, row: row)]
+                let data = conf.data[id]
+                if data & 0x80000000 == 0x80000000 {
+                    attributes[row][col] = .horizontalFlip
+                } else if data & 0x40000000 == 0x40000000 {
+                    attributes[row][col] = .verticalFlip
+                } else if data & 0xC0000000 == 0xC0000000 {
+                    attributes[row][col] = .bothFlip
+                }
+                datas[row][col] = data & 0x3FFFFFFF
+                id += 1
+            }
+        }
+        
+        update()
+    }
+    
+    func update() {
+        node.removeAllChildren()
+        for row in 0...rows-1 {
+            for col in 0...cols-1 {
+                let gid = datas[row][col]
                 if gid == 0 {
                     continue
                 }
-                for tilesetId in 0...map.tilesets.count-1 {
-                    let id = gid - map.tilesets[tilesetId].firstgid
-                    if (id >= 0) && (id < map.tilesets[tilesetId].tilecount) {
-                        addNode(col: col, row: row, gid: gid, tilesetId: tilesetId)
-                        break
-                    }
-                }
+                addNode(col: col, row: row, gid: gid)
             }
         }
     }
     
-    func addNode(col: Int, row: Int, gid: Int, tilesetId: Int) {
-        let tile = AHTile(position: coord2pos(col: col, row: row), gid: gid, tileset: map.tilesets[tilesetId])
-        tiles[coord2index(col: col, row: row)] = tile
-        node.addChild(tile)
+    func get(col: Int, row: Int) -> Int {
+        if (col < 0) || (col >= cols) || (row < 0) || (row >= rows) {
+            return -1
+        }
+        return datas[row][col]
     }
     
-    func add(col: Int, row: Int, gid: Int, tilesetId: Int) {
-        let index = coord2index(col: col, row: row)
-        if datas[index] != 0 {
-            rem(index: index)
+    func get(col: Int, row: Int, type: AHMetaTileType) -> [Int] {
+        var gids = [Int]()
+        for meta in AHMetaTileLayouts[type.rawValue] {
+            gids.append(get(col: col + meta.dx, row: row + meta.dy))
         }
+        return gids
+    }
+    
+    func set(col: Int, row: Int, gid: Int) {
         if gid == 0 {
             return
         }
-        set(col: col, row: row, gid: gid, tilesetId: tilesetId)
-    }
-            
-    func set(col: Int, row: Int, gid: Int, tilesetId: Int) {
-        datas[coord2index(col: col, row: row)] = gid
-        addNode(col: col, row: row, gid: gid, tilesetId: tilesetId)
-    }
-    
-    func get(index: Int) -> Int {
-        return datas[index]
-    }
-    
-    func get(col: Int, row: Int) -> Int {
-        let index = coord2index(col: col, row: row)
-        return get(index: index)
-    }
-    
-    func rem(index: Int) {
-        if datas[index] == 0 {
+        if (col < 0) || (col >= cols) || (row < 0) || (row >= rows) {
             return
         }
-        datas[index] = 0
-        tiles[index]!.removeFromParent()
-        tiles[index] = nil
+        datas[row][col] = gid
+        addNode(col: col, row: row, gid: gid)
+    }
+    
+    func set(col: Int, row: Int, gid: Int, type: AHMetaTileType) {
+        for meta in AHMetaTileLayouts[type.rawValue] {
+            set(col: col + meta.dx, row: row + meta.dy, gid: gid + meta.dg)
+        }
+    }
+    
+    func set(col: Int, row: Int, gids: [Int], type: AHMetaTileType) {
+        var id = 0
+        for meta in AHMetaTileLayouts[type.rawValue] {
+            set(col: col + meta.dx, row: row + meta.dy, gid: gids[id])
+            id += 1
+        }
+    }
+    
+    func addNode(col: Int, row: Int, gid: Int) {
+        if gid == 0 {
+            return
+        }
+        if (col < 0) || (col >= cols) || (row < 0) || (row >= rows) {
+            return
+        }
+        let id = tilesetId(gid: gid)
+        let tilenode = AHTileNode(position: coord2pos(col: col, row: row), gid: gid, tileset: map.tilesets[id])
+        nodes[row][col] = tilenode
+        node.addChild(tilenode)
+    }
+    
+    func add(col: Int, row: Int, gid: Int) -> Int {
+        let id = get(col: col, row: row)
+        if id != 0 {
+            rem(col: col, row: row)
+        }
+        set(col: col, row: row, gid: gid)
+        return id
+    }
+    
+    func add(col: Int, row: Int, gid: Int, type: AHMetaTileType) -> [Int] {
+        var gids = [Int]()
+        for meta in AHMetaTileLayouts[type.rawValue] {
+            gids.append(add(col: col + meta.dx, row: row + meta.dy, gid: gid + meta.dg))
+        }
+        return gids
     }
     
     func rem(col: Int, row: Int) {
-        let index = coord2index(col: col, row: row)
-        rem(index: index)
+        if (col < 0) || (col >= cols) || (row < 0) || (row >= rows) {
+            return
+        }
+        if datas[row][col] == 0 {
+            return
+        }
+        
+        datas[row][col] = 0
+        nodes[row][col]!.removeFromParent()
+        nodes[row][col] = nil
     }
     
-    let metaTileLayouts: [[AHMetaTile]] = [
-        [],
-        [ AHMetaTile(dx: 0, dy: 0, dg: 0), AHMetaTile(dx: 1, dy: 0, dg: 1), AHMetaTile(dx: 0, dy: 1, dg: 16), AHMetaTile(dx: 1, dy: 1, dg: 17)],
-        [ AHMetaTile(dx: 0, dy: 0, dg: 0), AHMetaTile(dx: 1, dy: 0, dg: 1), AHMetaTile(dx: 2, dy: 0, dg: 2), AHMetaTile(dx: 0, dy: 1, dg: 16), AHMetaTile(dx: 1, dy: 1, dg: 17), AHMetaTile(dx: 2, dy: 1, dg: 18)],
-        [ AHMetaTile(dx: 0, dy: 0, dg: 0), AHMetaTile(dx: 1, dy: 0, dg: 1), AHMetaTile(dx: 2, dy: 0, dg: 2), AHMetaTile(dx: 3, dy: 0, dg: 3), AHMetaTile(dx: 0, dy: 1, dg: 16), AHMetaTile(dx: 1, dy: 1, dg: 17), AHMetaTile(dx: 2, dy: 1, dg: 18), AHMetaTile(dx: 3, dy: 1, dg: 19)],
-    ]
-    
-    func setMetaTile(col: Int, row: Int, gid: Int, tilesetId: Int, layout: AHMetaTileLayout) {
-        for meta in metaTileLayouts[layout.rawValue] {
-            set(col: col + meta.dx, row: row + meta.dy, gid: gid + meta.dg, tilesetId: tilesetId)
+    func rem(col: Int, row: Int, gids: [Int], type: AHMetaTileType) {
+        var id = 0
+        for meta in AHMetaTileLayouts[type.rawValue] {
+            rem(col: col + meta.dx, row: row + meta.dy)
+            set(col: col + meta.dx, row: row + meta.dy, gid: gids[id])
+            id += 1
         }
     }
 }
@@ -354,7 +402,7 @@ class AHTileSet: NSObject {
     }
 }
 
-class AHTile: SKSpriteNode {
+class AHTileNode: SKSpriteNode {
     init(position: CGPoint, gid: Int, tileset: AHTileSet) {
         let tex = SKTexture(cgImage: tileset[gid])
         tex.filteringMode = .nearest
@@ -369,3 +417,30 @@ class AHTile: SKSpriteNode {
         fatalError("init(coder:) has not been implemented")
     }
 }
+
+struct AHMetaTile {
+    var col: Int
+    var row: Int
+    var gid: Int
+    var type: AHMetaTileType
+    var gids: [Int]
+    var tilelayerId: Int
+}
+
+struct AHMetaTileComponent {
+    var dx: Int
+    var dy: Int
+    var dg: Int
+}
+
+enum AHMetaTileType: Int {
+    case one                = 0
+    case oneByTwo
+    case twoByTwo
+}
+
+let AHMetaTileLayouts: [[AHMetaTileComponent]] = [
+    [ AHMetaTileComponent(dx: 0, dy: 0, dg: 0)],
+    [ AHMetaTileComponent(dx: 0, dy: 0, dg: 0), AHMetaTileComponent(dx: 0, dy: 1, dg: 16)],
+    [ AHMetaTileComponent(dx: 0, dy: 0, dg: 0), AHMetaTileComponent(dx: 1, dy: 0, dg: 1), AHMetaTileComponent(dx: 0, dy: 1, dg: 16), AHMetaTileComponent(dx: 1, dy: 1, dg: 17)]]
+

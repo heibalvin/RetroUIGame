@@ -16,11 +16,11 @@ class RetroGameScene: SKScene {
     var stateMachine: GKStateMachine!
     var maps = [AHTileMap]()
     
-    var graphs = [String: GKGraph]()
-    var entities = [GKEntity]()
-    
     var previousTime: TimeInterval = 0
     var deltaTime: TimeInterval = 0
+    
+    var timer: TimeInterval = 1
+    var time: TimeInterval = 0
     
     init(id: Int) {
         self.type = RetroGameType(rawValue: id)!
